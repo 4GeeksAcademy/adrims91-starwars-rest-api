@@ -8,8 +8,8 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
-#from models import Person
+from models import db, User, People
+
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -36,14 +36,64 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+@app.route('/users', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    if "username" not in data or 'email' not in data:
+        return jsonify({"error": "Invalid input, please set up username and password"}), 400
+    existing_user = User.query.filter_by(username=data['username']).first()
+    if (existing_user):
+        return jsonify({"error": "username already exists."}), 409
+    existing_email = User.query.filter_by(email=data['email']).first()
+    if (existing_email):
+        return jsonify({"error": "Email already exists."}), 409
 
-    return jsonify(response_body), 200
+    new_user = User(username=data['username'], email=data['email'], password=data['password'])
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({"id": new_user.id, "username": new_user.username, "email": new_user.email}), 201
+@app.route('/users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    users = list(map(lambda x: x.serialize(), users))
+    return jsonify(users)
+@app.route('/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"User deleted succesfully"}), 200
+@app.route('/people', methods=['GET'])
+def get_people():
+    people = People.query.all()
+    people = list(map(lambda x: x.serialize(), people))
+    return jsonify(people)
+@app.route('/people', methods=['POST'])
+def create_person():
+    data = request.get_json()
+    if "name" not in data or "age" not in data or "country" not in data:
+        return jsonify({"error": "Bad input"}), 400
+    existing_name = People.query.filter_by(name=data['name']).first()
+    if (existing_name):
+        return jsonify({"error": "This person already exists."}), 409
+
+    new_person = People(name=data['name'], age=data['age'], country=data['country'])
+    db.session.add(new_person)
+    db.session.commit()
+    return jsonify({"id": new_person.id, "name": new_person.name, "age": new_person.age, "country": new_person.country, "message": "Person created succesfully"}), 201
+@app.route('/people/<int:id>', methods=["DELETE"])
+def delete_person(id):
+    person = People.query.get(id)
+    if not person:
+        return jsonify({"Person not found"}), 404
+    
+    db.session.delete(person)
+    db.session.commit()
+    return jsonify({"message": "Person deleted succesfully"}), 200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
