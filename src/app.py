@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, People
+from models import db, User, People, Planets
 
 
 app = Flask(__name__)
@@ -71,6 +71,12 @@ def get_people():
     people = People.query.all()
     people = list(map(lambda x: x.serialize(), people))
     return jsonify(people)
+@app.route('/people/<int:id>', methods=['GET'])
+def get_person(id):
+    person = People.query.get(id)
+    if not person:
+        return jsonify({"error": "Person not found"}), 404
+    return jsonify(person.serialize()), 200
 @app.route('/people', methods=['POST'])
 def create_person():
     data = request.get_json()
@@ -93,6 +99,26 @@ def delete_person(id):
     db.session.delete(person)
     db.session.commit()
     return jsonify({"message": "Person deleted succesfully"}), 200
+
+@app.route('/planets', methods=['GET'])
+def get_planets():
+    planets = Planets.query.all()
+    planets = list(map(lambda x: x.serialize(), planets))
+    return jsonify(planets)
+
+@app.route('/planets', methods=['POST'])
+def create_planet():
+    data = request.get_json()
+    if "name" not in data or "population" not in data:
+        return jsonify({"error": "Bad input"}), 400
+    new_planet = Planets(name=data['name'], population=data['population'])
+    db.session.add(new_planet)
+    db.session.commit()
+    return jsonify({"id": new_planet.id, "name": new_planet.name, "population": new_planet.population}), 201
+
+@app.route('/users/favorites', methods=['GET'])
+def get_favorites():
+    
 
 
 # this only runs if `$ python src/app.py` is executed
