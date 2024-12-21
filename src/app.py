@@ -105,20 +105,21 @@ def get_planets():
     planets = Planets.query.all()
     planets = list(map(lambda x: x.serialize(), planets))
     return jsonify(planets)
-
+@app.route('/planets/<int:id>', methods=['GET'])
+def get_planet(id):
+    planet = Planets.query.get(id)
+    if not planet:
+        return jsonify({"error": "planet not found"}), 404
+    return jsonify(planet.serialize()), 200
 @app.route('/planets', methods=['POST'])
 def create_planet():
     data = request.get_json()
-    if "name" not in data or "population" not in data:
+    if "name" not in data or "description" not in data:
         return jsonify({"error": "Bad input"}), 400
-    new_planet = Planets(name=data['name'], population=data['population'])
+    new_planet = Planets(name=data['name'], description=data['description'])
     db.session.add(new_planet)
     db.session.commit()
-    return jsonify({"id": new_planet.id, "name": new_planet.name, "population": new_planet.population}), 201
-
-@app.route('/users/favorites', methods=['GET'])
-def get_favorites():
-    
+    return jsonify({"id": new_planet.id, "name": new_planet.name, "description": new_planet.description}), 201
 
 
 # this only runs if `$ python src/app.py` is executed
