@@ -17,7 +17,7 @@ class User(db.Model):
             "id": self.id,
             "username": self.username,
             "email": self.email,
-            "favorites": [favorite.id for favorite in self.favorites]
+            "favorites": [favorite.serialize() for favorite in self.favorites]
         }
 
 class People(db.Model):
@@ -59,6 +59,7 @@ class Favorite(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     people_id = db.Column(db.Integer, db.ForeignKey('people.id'), nullable=True)
     planet_id = db.Column(db.Integer, db.ForeignKey('planets.id'), nullable=True)
+    
 
     user = db.relationship('User', back_populates='favorites')
     person = db.relationship('People', back_populates='favorited_by')
@@ -66,3 +67,12 @@ class Favorite(db.Model):
 
     def __repr__(self):
         return '<Favorite %r>' % self.id
+    
+    def serialize(self):
+        data = {}
+        if self.person:
+            data["person"] = self.person.name
+        if self.planet:
+            data['planet'] = self.planet.name
+        return data
+    
