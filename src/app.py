@@ -86,6 +86,24 @@ def get_person(id):
     if not person:
         return jsonify({"error": "Person not found"}), 404
     return jsonify(person.serialize()), 200
+@app.route('/people/<int:id>', methods=['PUT'])
+def update_person(id):
+    person = People.query.get(id)
+    if not person:
+        return jsonify({"error": "person not found"})
+    data = request.get_json()
+    if "name" in data:
+        person.name = data['name']
+    if "age" in data:
+        person.age = data['age']
+    if "country" in data:
+        person.country = data['country']
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error", str(e)}), 500
+    return jsonify({"msg": "person updated succesfully"}), 200
 
 @app.route('/people', methods=['POST'])
 def create_person():
@@ -123,6 +141,22 @@ def get_planet(id):
     if not planet:
         return jsonify({"error": "Planet not found"}), 404
     return jsonify(planet.serialize()), 200
+@app.route('/planets/<int:id>', methods=['PUT'])
+def update_planet(id):
+    planet = Planets.query.get(id)
+    if not planet:
+        return jsonify({"error": "Planet not found"}), 404
+    data = request.get_json()
+    if "name" in data:
+        planet.name = data['name']
+    if "description" in data:
+        planet.description = data['description']
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"msg": "planet updated"}), 200
 
 @app.route('/planets', methods=['POST'])
 def create_planet():
